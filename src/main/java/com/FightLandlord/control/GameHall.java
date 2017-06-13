@@ -105,6 +105,7 @@ public class GameHall {
 		JSONObject mjson = new JSONObject();
 		mjson.put("action", 4);
 		mjson.put("uid", uid);
+	//	mjson.put("score", player.getScore());
 
 		room.noticeOthers(uid, mjson.toString());
 		// room.noticeAll(mjson.toString());
@@ -113,6 +114,7 @@ public class GameHall {
 		mjson.put("action", 41);
 		mjson.put("uid", player.getUser().getUid());
 		mjson.put("seat", room.getPlayerSeat());
+		//mjson.put("score", room.getPlayerScore());
 		mjson.put("readyInfo", room.allPlayersReadyInfo());
 		player.notice(mjson.toString());
 	}
@@ -180,11 +182,13 @@ public class GameHall {
 		// mjson.put("selfCards", per.getmCards());
 		// per.notice(mjson.toString());
 		// }
-		// 广播玩家座次
-		mjson = new JSONObject();
-		mjson.put("action", 10);
-		mjson.put("seat", room.getPlayerSeat());
-		room.noticeAll(mjson.toString());
+		
+//		功能重复
+//		// 广播玩家座次
+//		mjson = new JSONObject();
+//		mjson.put("action", 10);
+//		mjson.put("seat", room.getPlayerSeat());
+//		room.noticeAll(mjson.toString());
 		
 		
 		
@@ -197,13 +201,7 @@ public class GameHall {
 			int turn = random.nextInt(3);
 			room.setFirstAsk(turn);
 			room.setCurrentPlayer(turn);
-			
-			
-			//如果是第一局 告知玩家分数，之后告知玩家分数放在游戏结算时
-			mjson = new JSONObject();
-			mjson.put("action", 20);
-			mjson.put("score", room.getPlayerScore());
-			room.noticeAll(mjson.toString());
+					
 			
 			
 		} else {
@@ -354,6 +352,8 @@ public class GameHall {
 			mjson = new JSONObject();
 			mjson.put("action", 16);
 			mjson.put("playerRestCards", playerRestCards);
+			mjson.put("currentGameScore", room.getPlayerCurrentGameScore());
+			mjson.put("playersScore", room.getPlayerScore());
 			room.noticeAll( mjson.toString());
 			room.cleanRoom();
 		}

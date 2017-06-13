@@ -516,11 +516,11 @@ public class Room {
 	
 	
 	//获得玩家累计得分
-	public Map<Integer,Integer>getPlayerScore()
+	public Map<String,Integer>getPlayerScore()
 	{
-		Map<Integer,Integer> scores=new HashMap<Integer,Integer>();
+		Map<String,Integer> scores=new HashMap<String,Integer>();
 		for (Integer key : players.keySet()) {
-			scores.put(key, players.get(key).getScore());
+			scores.put(players.get(key).getUser().getUid(), players.get(key).getScore());
 		}
 
 		return scores;
@@ -528,26 +528,44 @@ public class Room {
 	
 	
 	//获得玩家当前一局得分
-	public Map<Integer,Integer>getPlayerCurrentGameScore()
+	public Map<String,Integer>getPlayerCurrentGameScore()
 	{
-		Map<Integer,Integer> scores=new HashMap<Integer,Integer>();
+		Map<String,Integer> scores=new HashMap<String,Integer>();
 		
+		int landlordScore;
+		int farmScorce;
 		
 			if (landlordWin)
 			{
+				
+				landlordScore=getPoint()*2;
+				farmScorce=-getPoint();
 				if(0==players.get((landlord+1)%3).getCount()&&0==players.get((landlord+2)%3).getCount())
 				{
-					scores.put(landlord, getPoint()*2*2);
-					players.get(landlord).addScore(getPoint()*2*2);
-					scores.put((landlord+1)%3, -getPoint()*2);
-					players.get((landlord+1)%3).addScore(-getPoint()*2);
-					scores.put((landlord+2)%3, -getPoint()*2);
-					players.get((landlord+2)%3).addScore(-getPoint()*2);
+					
+					landlordScore*=2;
+					farmScorce*=2;			
+				}									
+		}else{
+			landlordScore=-getPoint()*2;
+			farmScorce=getPoint();
+			if(1==players.get(landlord).getCount())
+			{
+				landlordScore*=2;
+				farmScorce*=2;	
 			}
-				
-			
-			
 		}
+			scores.put(players.get(landlord).getUser().getUid(), landlordScore);
+			
+			players.get(landlord).addScore(landlordScore);
+			
+			scores.put(players.get((landlord+1)%3).getUser().getUid(), farmScorce);
+			
+			players.get((landlord+1)%3).addScore(farmScorce);
+			
+			scores.put(players.get((landlord+2)%3).getUser().getUid(), farmScorce);
+			
+			players.get((landlord+2)%3).addScore(farmScorce);
 		return scores;
 	}
 }
