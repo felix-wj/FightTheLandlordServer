@@ -77,12 +77,9 @@ public class Player {
 		this.count = count;
 	}
 
-	public void outCards(int cards[]) {
-		for (int i = 0; i < cards.length; i++) {
+	public void outCards(List<Integer> cards) {
+		mCards.removeAll(cards);
 		
-			mCards.remove((Integer)cards[i]);
-		}
-
 	}
 
 	public boolean isCardsNumZero()
@@ -112,13 +109,14 @@ public class Player {
 		this.score = score;
 	}
 
-	public boolean hasCards(int cards[]) {
-		for (int i = 0; i < cards.length; i++) {
-			if (!mCards.contains(cards[i])) {
-				return false;
-			}
-		}
-		return true;
+	public boolean hasCards(List<Integer> cards) {
+		return mCards.containsAll(cards);
+//		for (int i = 0; i < cards.length; i++) {
+//			if (!mCards.contains(cards[i])) {
+//				return false;
+//			}
+//		}
+//		return true;
 	}
 	
 	public void addCount()
@@ -128,5 +126,10 @@ public class Player {
 	public void addScore(int s)
 	{
 		score+=s;
+	}
+	
+	public int getCardsNum()
+	{
+		return mCards.size();
 	}
 }

@@ -39,7 +39,7 @@ public class MyDecode extends CumulativeProtocolDecoder {
                 byte[] bytes = new byte[size];    
                 in.get(bytes, 0, size);   
                 String mes = new String(bytes,"UTF-8");   
-            	System.out.println("读完了没：："+in.remaining());    
+                
                 out.write(mes);                        
                 }   
                 if(in.remaining() > 0){

@@ -90,6 +90,10 @@ public class User {
 	public void setUnionid(String unionid) {
 		this.unionid = unionid;
 	}
+	public void useRoomCard()
+	{
+		roomCard--;
+	}
 	
 	
 }

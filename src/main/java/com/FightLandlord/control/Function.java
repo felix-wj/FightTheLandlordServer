@@ -42,14 +42,8 @@ public class Function {
 			mjson.put("roomCards", player.getUser().getRoomCard());
 			session.write(mjson.toString());
 			break;
-		case 2://创建房间
-			rid=gameHall.createRoom(uid);
-			mjson=new JSONObject();
-			mjson.put("action", 2);
-			mjson.put("uid", jstr.getString("uid"));
-			mjson.put("rid", rid);
-			
-			session.write(mjson.toString());
+		case 2://创建房间		
+			gameHall.createRoom(uid);			
 			break;
 		case 3://加入房间
 			String result=gameHall.enterRoom(rid, uid);
@@ -61,10 +55,10 @@ public class Function {
 			
 			gameHall.afterEnterRoom(rid, uid);
 			break;
-		case 4://退出房间	
+		case 4://刚进入房间，游戏开始前退出房间	
 			gameHall.outRoom(rid, uid);			
 			break;
-		case 5://房主解散房间
+		case 5://解散房间，申请退出，投票解散房间
 			gameHall.delRoom(rid, uid);
 			break;
 		case 6://玩家准备
@@ -83,11 +77,22 @@ public class Function {
 		//	cards=(List<Integer>) jstr.get("cards");
 			for(int i=0;i<array.length();i++)
 				cards.add((Integer)array.get(i));
-			int[] arrayCards=ListAndArray.listToArray( cards);
-			gameHall.outCards(rid, uid, arrayCards);
+			//int[] arrayCards=ListAndArray.listToArray( cards);
+			gameHall.outCards(rid, uid, cards);
 			break;
 		case 10://不出
 			gameHall.pass(rid, uid);
+			break;
+		case 11://结算后返回游戏
+			gameHall.goBackToReady(rid, uid);
+			break;	
+		case 12://投票是否同意解散房间,有一人同意即可解散房间
+			boolean vote=jstr.getBoolean("vote");
+			if(vote)
+				gameHall.delRoom(rid);
+			break;
+		case 13://点击提示，求助AI出牌
+			
 		}
 		
 	}

@@ -2,9 +2,12 @@ package com.FightLandlord.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import org.springframework.cglib.core.internal.CustomizerRegistry;
 
 public class Room {
 	private String rid;
@@ -21,9 +24,13 @@ public class Room {
 	private boolean gameBegin;
 	private int currentBet;// 当前叫分
 	private int multiple;// 倍数
-	private int times;// 累计局数
+	private int times;// 局数
 	private boolean landlordWin;// 地主是否获胜
 	private int passCount;// 统计轮询时不出次数，防止出现三个玩家一直不出情况
+	private int maxTimes;// 定义一张房卡可以打几局
+	private LinkedList<Integer> restCards;
+	private Map<Integer, ArrayList<Integer>> lastOutCards;// key 座号，value
+															// 玩家上次出牌，要不起为空
 
 	public Room(String rid, Player player, int max) {
 		this.rid = rid;
@@ -45,6 +52,33 @@ public class Room {
 		multiple = 1;
 		landlordWin = false;
 		passCount = 0;
+		maxTimes = 4;
+		restCards = new LinkedList<Integer>();
+		lastOutCards = new HashMap<Integer, ArrayList<Integer>>();
+	}
+
+	public Map<Integer, ArrayList<Integer>> getLastOutCards() {
+		return lastOutCards;
+	}
+
+	public void setLastOutCards(Map<Integer, ArrayList<Integer>> lastOutCards) {
+		this.lastOutCards = lastOutCards;
+	}
+
+	public LinkedList<Integer> getRestCards() {
+		return restCards;
+	}
+
+	public void setRestCards(LinkedList<Integer> restCards) {
+		this.restCards = restCards;
+	}
+
+	public int getMaxTimes() {
+		return maxTimes;
+	}
+
+	public void setMaxTimes(int maxTimes) {
+		this.maxTimes = maxTimes;
 	}
 
 	public int getPassCount() {
@@ -85,6 +119,10 @@ public class Room {
 
 	public void setTimes(int times) {
 		this.times = times;
+	}
+
+	public void addTimes() {
+		times = times % maxTimes + 1;
 	}
 
 	public boolean isGameBegin() {
@@ -187,6 +225,21 @@ public class Room {
 		return players.get(currentPlayer).getUser().getUid();
 	}
 
+	public Player getPreviousPlayer(int seat) {
+		return players.get((seat + 1) % maxPlayerNum);
+	}
+
+	public Player getNextPlayer(int seat) {
+		return players.get((seat - 1 + maxPlayerNum) % maxPlayerNum);
+	}
+
+	public ArrayList<Integer> cardsNeedResponse(int seat)
+	{
+		int key=(seat - 1 + maxPlayerNum) % maxPlayerNum;
+		if(lastOutCards.get(key)==null)			
+			key=(seat + 1) % maxPlayerNum;				
+		return lastOutCards.get(key);
+	}
 	public void handOutCards() {
 		int cards[] = new int[54];
 		int num = 0;
@@ -198,13 +251,13 @@ public class Room {
 		}
 		cards[52] = 116;
 		cards[53] = 117;
-		Random random = new Random();
-		for (int l = 0; l < 54; l++) {
-			int des = random.nextInt(54);
-			int temp = cards[l];
-			cards[l] = cards[des];
-			cards[des] = temp;
-		}
+		// Random random = new Random();
+		// for (int l = 0; l < 54; l++) {
+		// int des = random.nextInt(54);
+		// int temp = cards[l];
+		// cards[l] = cards[des];
+		// cards[des] = temp;
+		// }
 		// //定手牌 测试
 		// int j,m;
 		// m=0;
@@ -247,12 +300,15 @@ public class Room {
 		for (int k = 0; k < maxPlayerNum; k++) {
 			do {
 				players.get(k).inCard(cards[t]);
+				restCards.add(cards[t]);
 				t++;
 			} while (0 != (t % 17));
 		}
-		landlordCards[0] = cards[51];
-		landlordCards[1] = cards[52];
-		landlordCards[2] = cards[53];
+		for (int i = 0; i < 3; i++) {
+			landlordCards[i] = cards[t];
+			restCards.add(cards[t]);
+			t++;
+		}
 
 		// //测试：
 		// System.out.println("测试：玩家手牌");
@@ -267,9 +323,32 @@ public class Room {
 			players.get(landlord).inCard(landlordCards[i]);
 	}
 
-	public void putOutCards(int cards[]) {
-
+	public void putOutCards(ArrayList<Integer> cards) {
+		restCards.removeAll(cards);
+		lastOutCards.put(currentPlayer, cards);
+		// for (int i = 0; i < cards.length; i++) {
+		//
+		// restCards.remove((Integer) cards[i]);
+		// }
 		players.get(currentPlayer).outCards(cards);
+
+	}
+
+	public void updateLastOutCards(ArrayList<Integer> cards) {
+		lastOutCards.remove(currentPlayer);
+		lastOutCards.put(currentPlayer, cards);
+	}
+
+	public void updateLastOutCards() {
+		lastOutCards.remove(currentPlayer);
+	}
+
+	// 判断是任意出牌（TRUE）还是接牌（FALSE）
+	public boolean isFreeOutCards(int seat) {
+		if (lastOutCards.get((seat + 1) % 3) == null && lastOutCards.get((seat + 2) % 3) == null)
+			return true;
+		else
+			return false;
 	}
 
 	public boolean enterRoom(Player player) {
@@ -294,10 +373,11 @@ public class Room {
 		return false;
 	}
 
-	public void outRoom(String uid) {
+	public boolean outRoom(String uid) {
 		Player player = getPlayer(uid);
-		if (player != null) {
-			// playerList.remove(player);
+		if (uid.equals(host))
+			return false;
+		else {
 
 			for (Integer key : players.keySet()) {
 				if (players.get(key) == player) {
@@ -306,10 +386,11 @@ public class Room {
 					break;
 				}
 			}
-
-			// 如果是房主，退出时当前房间人数不做变化
-			if (!player.getUser().getUid().equals(host))
-				currentPlayerNum--;
+			currentPlayerNum--;
+			return true;
+			// // 如果是房主，退出时当前房间人数不做变化
+			// if (!player.getUser().getUid().equals(host))
+			// currentPlayerNum--;
 		}
 
 	}
@@ -423,7 +504,7 @@ public class Room {
 		return seat;
 	}
 
-	public Integer getKey(Player player) {
+	public Integer getSeat(Player player) {
 		Integer key = null;
 		// Map,HashMap并没有实现Iteratable接口.不能用于增强for循环.
 		for (Integer getKey : players.keySet()) {
@@ -467,6 +548,16 @@ public class Room {
 		passCount++;
 	}
 
+	// 询问地主与玩家关系，地主是玩家的上家，返回1，地主是玩家自己返回2，地主是下家返回3
+	public int relationBetweenlandlordAndPlayer(int seat) {
+		if (seat == landlord)
+			return 2;
+		else if ((seat - 1 + maxPlayerNum) % maxPlayerNum == landlord)
+			return 1;
+		else
+			return 3;
+	}
+
 	// 清理房间数据，准备下一局游戏
 	public void cleanRoom() {
 		readyNum = 0;
@@ -475,7 +566,7 @@ public class Room {
 			players.get(key).getmCards().clear();
 			players.get(key).setBet(-1);
 			players.get(key).setCount(0);
-			
+
 		}
 		currentPlayer = -1;
 		landlord = -1;
@@ -484,88 +575,82 @@ public class Room {
 		times++;
 
 		readyNum = 0;
-
+		multiple=1;
+		
+		restCards.clear();;
+		lastOutCards.clear();;
 	}
 	// 更改倍数，判断牌型，是否有炸弹，有则倍数×2，返回TRUE
 
-	public boolean changeMultiple(int cards[]) {
-		if (2 == cards.length) {
-			if (233 == (cards[0] + cards[1])) {
-				multiple*=2;
+	public boolean changeMultiple(List<Integer> cards) {
+		if (2 == cards.size()) {
+			if (233 == (cards.get(0) + cards.get(1))) {
+				multiple *= 2;
 				return true;
 			}
 			return false;
 		}
-		if(4==cards.length)
-		{
-			int a=cards[0]%100;
-			for(int i=1;i<4;i++)
-				if(cards[i]%100!=a)
+		if (4 == cards.size()) {
+			int a = cards.get(0) % 100;
+			for (int i = 1; i < 4; i++)
+				if (cards.get(i) % 100 != a)
 					return false;
-			multiple*=2;
+			multiple *= 2;
 			return true;
 		}
 		return false;
 	}
-	
-	
-	public int getPoint()//游戏当前底分
+
+	public int getPoint()// 游戏当前底分
 	{
-		return multiple*currentBet;
+		return multiple * currentBet;
 	}
-	
-	
-	//获得玩家累计得分
-	public Map<String,Integer>getPlayerScore()
-	{
-		Map<String,Integer> scores=new HashMap<String,Integer>();
+
+	// 获得玩家累计得分
+	public Map<String, Integer> getPlayerScore() {
+		Map<String, Integer> scores = new HashMap<String, Integer>();
 		for (Integer key : players.keySet()) {
 			scores.put(players.get(key).getUser().getUid(), players.get(key).getScore());
 		}
 
 		return scores;
 	}
-	
-	
-	//获得玩家当前一局得分
-	public Map<String,Integer>getPlayerCurrentGameScore()
-	{
-		Map<String,Integer> scores=new HashMap<String,Integer>();
-		
+
+	// 获得玩家当前一局得分
+	public Map<String, Integer> getPlayerCurrentGameScore() {
+		Map<String, Integer> scores = new HashMap<String, Integer>();
+
 		int landlordScore;
 		int farmScorce;
-		
-			if (landlordWin)
-			{
-				
-				landlordScore=getPoint()*2;
-				farmScorce=-getPoint();
-				if(0==players.get((landlord+1)%3).getCount()&&0==players.get((landlord+2)%3).getCount())
-				{
-					
-					landlordScore*=2;
-					farmScorce*=2;			
-				}									
-		}else{
-			landlordScore=-getPoint()*2;
-			farmScorce=getPoint();
-			if(1==players.get(landlord).getCount())
-			{
-				landlordScore*=2;
-				farmScorce*=2;	
+
+		if (landlordWin) {
+
+			landlordScore = getPoint() * 2;
+			farmScorce = -getPoint();
+			if (0 == players.get((landlord + 1) % 3).getCount() && 0 == players.get((landlord + 2) % 3).getCount()) {
+
+				landlordScore *= 2;
+				farmScorce *= 2;
+			}
+		} else {
+			landlordScore = -getPoint() * 2;
+			farmScorce = getPoint();
+			if (1 == players.get(landlord).getCount()) {
+				landlordScore *= 2;
+				farmScorce *= 2;
 			}
 		}
-			scores.put(players.get(landlord).getUser().getUid(), landlordScore);
-			
-			players.get(landlord).addScore(landlordScore);
-			
-			scores.put(players.get((landlord+1)%3).getUser().getUid(), farmScorce);
-			
-			players.get((landlord+1)%3).addScore(farmScorce);
-			
-			scores.put(players.get((landlord+2)%3).getUser().getUid(), farmScorce);
-			
-			players.get((landlord+2)%3).addScore(farmScorce);
+		scores.put(players.get(landlord).getUser().getUid(), landlordScore);
+
+		players.get(landlord).addScore(landlordScore);
+
+		scores.put(players.get((landlord + 1) % 3).getUser().getUid(), farmScorce);
+
+		players.get((landlord + 1) % 3).addScore(farmScorce);
+
+		scores.put(players.get((landlord + 2) % 3).getUser().getUid(), farmScorce);
+
+		players.get((landlord + 2) % 3).addScore(farmScorce);
 		return scores;
 	}
 }
