@@ -2,10 +2,7 @@ package com.FightLandlord.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -61,18 +58,6 @@ public class FightLandlordServer  {
             System.out.println("服务器启动成功");
         }
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		
 	
 }

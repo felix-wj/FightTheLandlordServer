@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.mina.core.session.IoSession;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.FightLandlord.model.Player;
 import com.FightLandlord.model.Room;
+import com.FightLandlord.model.User;
 import com.FightLandlord.tool.AITool;
 import com.FightLandlord.tool.ByteArrayAndInt;
 import com.FightLandlord.tool.ListAndArray;
@@ -19,11 +21,26 @@ import com.FightLandlord.tool.RandomRoomID;
 public class GameHall {
 	Map<String, Room> rooms;
 	Map<String, Player> players;
-
-	public GameHall() {
+	Map<IoSession, String[]> sessions;
+	public GameHall() { 
 		rooms = new HashMap<String, Room>();
 		players = new HashMap<String, Player>();
+		sessions=new HashMap<IoSession,String[]>();
 	}
+
+	
+
+	public Map<IoSession, String[]> getSessions() {
+		return sessions;
+	}
+
+
+
+	public void setSessions(Map<IoSession, String[]> sessions) {
+		this.sessions = sessions;
+	}
+
+
 
 	public Map<String, Room> getRooms() {
 		return rooms;
@@ -41,15 +58,21 @@ public class GameHall {
 		this.players = players;
 	}
 
-	public void addPlayer(Player player) {
+	public void addPlayer(String uid,IoSession session) throws JSONException {
+		Player player=new Player(new User(uid,5),session);
 		players.put(player.getUser().getUid(), player);
+		String[] location=new String[2];
+		location[0]=uid;
+		sessions.put(session, location);
+		JSONObject mjson=new JSONObject();
+		mjson.put("action", 1);
+		mjson.put("uid", player.getUser().getUid());
+		mjson.put("roomCards", player.getUser().getRoomCard());
+		session.write(mjson.toString());
 	}
 
-	public void delPlayer(Player player) {
-		players.remove(player.getUser().getUid());
-	}
-
-	public void createRoom(String uid) throws JSONException {
+	
+	public void createRoom(String uid,IoSession session) throws JSONException {
 		Player player = players.get(uid);
 		JSONObject mjson = null;
 		if (0 == player.getUser().getRoomCard()) {
@@ -61,7 +84,8 @@ public class GameHall {
 		String rid = RandomRoomID.IDBuilder();
 		Room room = new Room(rid, player, 3);
 		rooms.put(rid, room);
-		delPlayer(player);
+		players.remove(player.getUser().getUid());
+		sessions.get(session)[1]=rid;
 		mjson = new JSONObject();
 		mjson.put("action", 2);
 		mjson.put("uid", uid);
@@ -109,7 +133,7 @@ public class GameHall {
 
 	}
 
-	public String enterRoom(String rid, String uid) throws JSONException {
+	public String enterRoom(String rid, String uid,IoSession session) throws JSONException {
 		Player player = players.get(uid);
 		Room room = rooms.get(rid);
 		// if(player==null)
@@ -123,7 +147,9 @@ public class GameHall {
 			return "noRoom";
 		if (room.enterRoom(player)) {
 			{
+				sessions.get(session)[1]=rid;
 				players.remove(uid);
+				
 				return "true";
 
 			}
@@ -497,5 +523,26 @@ public class GameHall {
 		mjson.put("uid", uid);
 		mjson.put("cards", cardsToResponse);
 		
+	}
+	
+	public void disconnect(IoSession session) throws JSONException
+	{
+		System.out.println("断线重连-----");
+		if(session.containsAttribute(session))
+			System.out.println("session存在");
+		String[] location=sessions.get(session);
+		if(location[0]!=null)
+			System.out.println("uid存在"+location[0]);
+		if(location[1]!=null)
+			System.out.println("rid存在"+location[1]);
+		if(location!=null)
+		{
+			Room room=rooms.get(location[1]);
+			//Player player=room.getPlayer(location[0]);
+			JSONObject mjson=new JSONObject();
+			mjson.put("action", 100);
+			mjson.put("disconnectUid", location[0]);
+			room.noticeOthers(location[0], mjson.toString());
+		}
 	}
 }

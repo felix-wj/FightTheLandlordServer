@@ -3,6 +3,7 @@ package com.FightLandlord.server;
 import org.apache.mina.core.service.IoHandler;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.json.JSONObject;
 
 import com.FightLandlord.control.Function;
 
@@ -22,6 +23,8 @@ public class FightLandlordServerHandler implements IoHandler {
 	public void inputClosed(IoSession session) throws Exception {
 		// TODO Auto-generated method stub
 		logger.info("连接关闭");
+		
+		System.out.println("sessioninputclosed断断断了：");
 		session.close(true);
 
 	}
@@ -44,9 +47,11 @@ public class FightLandlordServerHandler implements IoHandler {
 		logger.info("服务器成功发送信息: " + arg1.toString());
 	}
 
-	public void sessionClosed(IoSession arg0) throws Exception {
+	public void sessionClosed(IoSession session) throws Exception {
 		// TODO Auto-generated method stub
-
+		System.out.println("session断断断了：");
+		//fun.run(session, "{\"action\":100}");
+		
 	}
 
 	public void sessionCreated(IoSession arg0) throws Exception {

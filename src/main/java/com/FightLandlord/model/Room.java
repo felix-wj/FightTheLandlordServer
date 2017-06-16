@@ -233,13 +233,13 @@ public class Room {
 		return players.get((seat - 1 + maxPlayerNum) % maxPlayerNum);
 	}
 
-	public ArrayList<Integer> cardsNeedResponse(int seat)
-	{
-		int key=(seat - 1 + maxPlayerNum) % maxPlayerNum;
-		if(lastOutCards.get(key)==null)			
-			key=(seat + 1) % maxPlayerNum;				
+	public ArrayList<Integer> cardsNeedResponse(int seat) {
+		int key = (seat - 1 + maxPlayerNum) % maxPlayerNum;
+		if (lastOutCards.get(key) == null)
+			key = (seat + 1) % maxPlayerNum;
 		return lastOutCards.get(key);
 	}
+
 	public void handOutCards() {
 		int cards[] = new int[54];
 		int num = 0;
@@ -251,13 +251,13 @@ public class Room {
 		}
 		cards[52] = 116;
 		cards[53] = 117;
-		// Random random = new Random();
-		// for (int l = 0; l < 54; l++) {
-		// int des = random.nextInt(54);
-		// int temp = cards[l];
-		// cards[l] = cards[des];
-		// cards[des] = temp;
-		// }
+		Random random = new Random();
+		for (int l = 0; l < 54; l++) {
+			int des = random.nextInt(54);
+			int temp = cards[l];
+			cards[l] = cards[des];
+			cards[des] = temp;
+		}
 		// //定手牌 测试
 		// int j,m;
 		// m=0;
@@ -575,10 +575,12 @@ public class Room {
 		times++;
 
 		readyNum = 0;
-		multiple=1;
-		
-		restCards.clear();;
-		lastOutCards.clear();;
+		multiple = 1;
+
+		restCards.clear();
+		;
+		lastOutCards.clear();
+		;
 	}
 	// 更改倍数，判断牌型，是否有炸弹，有则倍数×2，返回TRUE
 
