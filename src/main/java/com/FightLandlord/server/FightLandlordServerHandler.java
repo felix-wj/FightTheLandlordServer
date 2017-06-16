@@ -50,7 +50,7 @@ public class FightLandlordServerHandler implements IoHandler {
 	public void sessionClosed(IoSession session) throws Exception {
 		// TODO Auto-generated method stub
 		System.out.println("session断断断了：");
-		//fun.run(session, "{\"action\":100}");
+		fun.run(session, "{\"action\":100}");
 		
 	}
 
