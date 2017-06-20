@@ -1,0 +1,159 @@
+							客户端服务端交互action代码
+客户端发送：
+	action 1: 登录建立连接
+		uid
+		
+	action 2: 创建房间
+		uid
+
+	action 3：加入房间
+		rid
+		uid
+
+	action 4：刚进入房间，游戏开始前退出房间
+		rid
+		uid
+
+	action 5：解散房间。申请退出，投票解散房间
+		rid
+		uid
+
+	action 6：玩家进入准备状态
+		rid
+		uid
+
+	action 7：玩家取消准备状态
+		rid
+		uid
+
+	action 8：叫分
+		rid
+		uid
+		bet：int型，叫的分数
+
+	action 9：出牌
+		rid
+		uid
+		cards：客户端是table，服务端用JSONArray提取转成ListArray
+
+	action 10：不出
+		rid
+		uid
+
+	action 11：结算后返回游戏，返回到重新准备状态
+		rid
+		uid
+
+	action 12：投票是否同意解散房间，服务端收到的action代码中有一人同意即可解散房间
+		rid
+		uid
+		vote：boolean类型，TRUE为同意，FALSE为不同意
+
+	action 13：点击提示，求助AI出牌
+		rid
+		uid
+		*AI的dll文件还没得到，目前只写了服务端的接口和实现代码，没有测试过，客户端的提示还是简单的牌型提示*
+
+	action 100：断线提示
+		session：断线信息由服务端的com.FightLandlord.server.FightlandlordServerHandler.java的sessionClosed方法得到，此action在该处编写
+
+
+
+服务端发送：
+action 1：登录成功，告知用户信息
+	uid
+	roomCards:int型
+	*微信登录尚未实现，目前只有默认五张房卡这一条用户个人信息*
+
+action 2：创建房间成功，告知玩家房间号
+	uid
+	rid
+
+action 3：告知玩家加入房间是否成功
+	uid
+	result：String类型,"noRoom"表示该房间未被创建，"true"加入成功，"full"房间人员已满
+
+action 4：告知房间内其他玩家，玩家uid加入房间
+	uid
+
+action 41：把房间已有玩家和他们的座位信息，准备状态告知加入房间的uid玩家
+	uid
+	seat：Map<Integer, String>类型，key为座位号，value为uid
+	readyInfo：Map<String, Boolean>类型，key为uid，value为是否准备
+
+action 5：uid退出房间，告知房间内其他玩家
+	uid
+
+action 6：注释掉了，弃用
+
+action 7：告知其他玩家某人进入准备状态
+	uid
+
+action 8: 告知其他玩家某人取消准备
+	uid
+
+action 9： 发牌后告知玩家手牌
+	uid
+	selfCards：List
+
+action 10：广播玩家座次 弃用
+	
+action 11：通知房间内所有玩家，轮到uid玩家回合叫分
+	firstAskID ：String类型，先叫分的玩家的id
+	currenUID：string 	当前正在叫分的玩家的id
+
+action 12: 通知房间内其他的玩家，某一玩家叫分
+	bet：叫分
+	currentBet：当前的最高分
+
+action 13 :完成叫地主时发送
+	landlordUId：string 地主的UID
+	point：				本局游戏的底分
+	landloardCards:		地主牌
+
+action 14：所有人都不叫地主，重新开始
+
+
+action 15：某一人出牌，服务器通知其他人
+	uid： 		string				出牌者id
+	cards: 		list<integer>		出了什么牌
+	gameover：	boolean				游戏是否已经结束
+	currentUId：string				现在轮到谁出牌了
+
+
+action16:游戏结束
+	playerRestCards: Map<String, List<Integer>> 玩家手里剩下的牌 string为uid list存放扑克牌
+	currentGameScore 							当前游戏的分数,每一个玩家此局的得分
+	playerScore		每个玩家现在的分数
+
+action 17:通知其他玩家某玩家不要，不出牌
+	uid
+	gameover：boolean
+	currentUid: String 轮到uid玩家出牌
+
+action 18：告知玩家输赢
+	uid
+	win： boolean 是否赢了
+
+action 19：有人出炸弹当前游戏赌分翻倍，通知所有玩家
+	point：游戏赌分
+
+action 20:游戏开始通知玩家当前游戏局数
+	times： int
+
+action 21：房卡不足时，创建房间，告警
+	warning：String类型 值为"noRoomCards"
+
+action 22：游戏后房卡不足，解散房间
+	host：String类型，房主uid
+	cause：String类型值为"noRoomCard"
+
+action23： 结算界面点击返回游戏回到准备界面
+**客户端点击返回游戏，服务端判断房卡是否充足，充足发送action23，允许客户端跳转到准备界面**
+
+action24：告知其他玩家，某玩家请求解散房间
+	uid
+
+action25：调用AI，告知玩家AI算出的完美出牌
+	uid
+	cards：List

@@ -86,7 +86,7 @@ public class Function {
 			break;
 
 		case 100:// 断线
-			System.out.println("case100");
+		
 			gameHall.disconnect(session);
 		}
 

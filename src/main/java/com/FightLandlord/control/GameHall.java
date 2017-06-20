@@ -525,16 +525,12 @@ public class GameHall {
 		
 	}
 	
+	//简单的处理玩家掉线,掉线通知其他玩家
 	public void disconnect(IoSession session) throws JSONException
 	{
-		System.out.println("断线重连-----");
-		if(session.containsAttribute(session))
-			System.out.println("session存在");
+	
 		String[] location=sessions.get(session);
-		if(location[0]!=null)
-			System.out.println("uid存在"+location[0]);
-		if(location[1]!=null)
-			System.out.println("rid存在"+location[1]);
+		
 		if(location!=null)
 		{
 			Room room=rooms.get(location[1]);
